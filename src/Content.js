@@ -2,6 +2,8 @@ import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
+import Toast from './Toast';
+
 export default function Content() {
   return (
     <Box sx={{marginTop: 3}}>
@@ -10,6 +12,7 @@ export default function Content() {
       <Typography variant="body1" sx={{fontStyle: 'italic', marginTop: 1}}>
         TODO: List of liked submissions here (delete this line)
       </Typography>
+      <Toast />
     </Box>
   );
 }

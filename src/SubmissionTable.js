@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { styled } from '@mui/system';
+import CircularProgress from '@mui/material/CircularProgress';
 import {
   TablePagination,
   tablePaginationClasses as classes,
 } from '@mui/base/TablePagination';
 
-export default function SubmissionTable({rows}) {
-  console.log(rows);
+export default function SubmissionTable({rows, loading}) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
@@ -24,6 +24,11 @@ export default function SubmissionTable({rows}) {
 
   return (
     <Root sx={{ maxWidth: '100%', width: '100%' }}>
+      {loading && (
+        <Overlay>
+          <CircularProgress />
+        </Overlay>
+      )}
       <table>
         <thead>
           <tr>
@@ -45,7 +50,7 @@ export default function SubmissionTable({rows}) {
           ))}
           {emptyRows > 0 && Array.from({length: emptyRows}).map((_, index) => (
             <tr key={`empty-${index}`}>
-                <td className="empty-row" colspan="3"></td>
+                <td className="empty-row" colSpan="3"></td>
             </tr>
           ))}
         </tbody>
@@ -93,7 +98,9 @@ const Root = styled('div')`
     border-bottom: none;
   }
 
-  `;
+  position: relative;
+
+`;
 
 const CustomTablePagination = styled(TablePagination)`
   & .${classes.toolbar} {
@@ -126,3 +133,15 @@ const CustomTablePagination = styled(TablePagination)`
   }
 `;
 
+const Overlay = styled('div')`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+`;

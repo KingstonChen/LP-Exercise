@@ -3,6 +3,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import { backOff } from 'exponential-backoff';
 
 import { onMessage, saveLikedFormSubmission } from './service/mockServer';
 
@@ -27,7 +28,7 @@ export default function Toast({onLikeSucceed, onLikeFail = null}) {
         setState({...formSubmission.data, open: true});
       }
     })
-  });
+  }, []);
 
   onLikeFail = null || (() => alert("Liking the form submission failed"));
 
@@ -36,8 +37,16 @@ export default function Toast({onLikeSucceed, onLikeFail = null}) {
   }
 
   function handleLike() {
-    handleClose();
-    saveLikedFormSubmission(form).then(onLikeSucceed, onLikeFail);
+    handleClose();  // Close the toast immediately to prevent liking it twice
+
+    backOff(() => saveLikedFormSubmission(form), {
+      retry: (e, attemptNumber) => {
+        console.log(`SaveLikedFormSubmission attempt ${attemptNumber} failed. Error: ${e.message}`);
+        return true; // Retry on failure
+      }
+    })
+    .then(onLikeSucceed)
+    .catch(onLikeFail);
   }
 
   const action = (

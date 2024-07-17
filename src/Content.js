@@ -36,11 +36,15 @@ export default function Content() {
     setRows(prevRows => [form, ...prevRows]);
   }
 
+  function removeFailedLike(key) {
+    setRows(prevRows => prevRows.filter(form => form.id !== key));
+  }
+
   return (
     <Box sx={{marginTop: 3}}>
       <Typography variant="h4">Liked Form Submissions</Typography>
       <SubmissionTable rows={rows} loading={loading} />
-      <ToastStack onLike={addNewLikedFormSubmission} />
+      <ToastStack onLike={addNewLikedFormSubmission} onLikeFail={removeFailedLike} />
     </Box>
   );
 }

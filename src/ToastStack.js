@@ -25,6 +25,8 @@ export default function ToastStack({onLike, onLikeFail}) {
         }
       }
     })
+  // Set the dependency to [] so that the callback is only registered with the server once
+  // eslint-disable-next-line
   }, []);
 
   function enqueue(key, variant = "default") {

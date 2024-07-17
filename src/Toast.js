@@ -1,40 +1,43 @@
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState } from 'react';
 import Snackbar from '@mui/material/Snackbar';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { onMessage } from './service/mockServer';
+import { onMessage, saveLikedFormSubmission } from './service/mockServer';
 
-export default function Toast() {
+export default function Toast({onLikeSucceed, onLikeFail = null}) {
   const [state, setState] = useState({
     open: false,
     firstName: "",
     lastName: "",
     email: "",
-    id: ""
   });
-  const {open, firstName, lastName, email, id} = state;
+  const {open, firstName, lastName, email} = state;
   const message = `${firstName} ${lastName}\n${email}`;
+  const [form, setForm] = useState({
+    id: "",
+    data: {}
+  })
 
   useEffect(() => {
     onMessage((formSubmission) => {
-      setState({
-        open: true,
-        firstName: formSubmission.data.firstName,
-        lastName: formSubmission.data.lastName,
-        email: formSubmission.data.email,
-        id: formSubmission.id
-      })
+      if (form.id !== formSubmission.id) {
+        setForm(formSubmission);
+        setState({...formSubmission.data, open: true});
+      }
     })
-  }, []);
+  });
 
+  onLikeFail = null || (() => alert("Liking the form submission failed"));
 
   function handleClose() {
-    setState({ ...state, open: false, id: "" });
+    setState({ ...state, open: false });
   }
 
   function handleLike() {
+    handleClose();
+    saveLikedFormSubmission(form).then(onLikeSucceed, onLikeFail);
   }
 
   const action = (

@@ -13,36 +13,34 @@ export default function Content() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    refreshSubmissionTable();
+    function fetchSubmissionTable() {
+      setLoading(true);
+
+      backOff(() => fetchLikedFormSubmissions(), {
+        retry: (e, attemptNumber) => {
+          console.log(`FetchLikedFormSubmissions attempt ${attemptNumber} failed. Error: ${e.message}`);
+          return true; // Retry on failure
+        }
+      })
+      .then((response) => {
+        setRows(response.formSubmissions);
+        setLoading(false);
+      })
+      .catch(() => alert("Server Error!"));
+    }
+
+    fetchSubmissionTable();
   }, [])
 
-  function onfetchSubmissionsSucceed(response) {
-    setRows(response.formSubmissions);
-    setLoading(false);
-  }
-
-  function onfetchSubmissionsFail(response) {
-    alert("Fetching liked form submissions failed");
-  }
-
-  function refreshSubmissionTable() {
-    setLoading(true);
-
-    backOff(() => fetchLikedFormSubmissions(), {
-      retry: (e, attemptNumber) => {
-        console.log(`FetchLikedFormSubmissions attempt ${attemptNumber} failed. Error: ${e.message}`);
-        return true; // Retry on failure
-      }
-    })
-    .then(onfetchSubmissionsSucceed)
-    .catch(onfetchSubmissionsFail);
+  function addNewLikedFormSubmission(form) {
+    setRows([form, ...rows]);
   }
 
   return (
     <Box sx={{marginTop: 3}}>
       <Typography variant="h4">Liked Form Submissions</Typography>
       <SubmissionTable rows={rows} loading={loading} />
-      <Toast onLikeSucceed={refreshSubmissionTable} />
+      <Toast onLike={addNewLikedFormSubmission} />
     </Box>
   );
 }

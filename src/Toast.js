@@ -7,7 +7,7 @@ import { backOff } from 'exponential-backoff';
 
 import { onMessage, saveLikedFormSubmission } from './service/mockServer';
 
-export default function Toast({onLikeSucceed, onLikeFail = null}) {
+export default function Toast({onLike}) {
   const [state, setState] = useState({
     open: false,
     firstName: "",
@@ -30,23 +30,21 @@ export default function Toast({onLikeSucceed, onLikeFail = null}) {
     })
   }, []);
 
-  onLikeFail = null || (() => alert("Liking the form submission failed"));
-
   function handleClose() {
     setState({ ...state, open: false });
   }
 
   function handleLike() {
     handleClose();  // Close the toast immediately to prevent liking it twice
-
+    onLike(form);   // Update the liked submissions locally because the server is slow
     backOff(() => saveLikedFormSubmission(form), {
       retry: (e, attemptNumber) => {
         console.log(`SaveLikedFormSubmission attempt ${attemptNumber} failed. Error: ${e.message}`);
         return true; // Retry on failure
       }
     })
-    .then(onLikeSucceed)
-    .catch(onLikeFail);
+    .then(() => console.log("Form submission liked"))
+    .catch(() => alert("Server Error!")); // TODO: if it fails, the form submission needs to be unliked
   }
 
   const action = (

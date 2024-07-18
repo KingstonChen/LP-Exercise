@@ -15,7 +15,6 @@ export default function ToastStack({onLike, onLikeFail}) {
 
   useEffect(() => {
     onMessage((formSubmission) => {
-      console.log(`${formSubmission.id}, ${Date.now()}`);
       if (!forms.current.has(formSubmission.id)) {
         forms.current.set(formSubmission.id, formSubmission);
         if (displayed.current.length < maxSnack) {

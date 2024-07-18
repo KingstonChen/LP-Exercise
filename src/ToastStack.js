@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react';
-import { SnackbarProvider, enqueueSnackbar, closeSnackbar } from 'notistack';
+import {
+  SnackbarProvider,
+  enqueueSnackbar,
+  closeSnackbar,
+} from 'notistack';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import { backOff } from 'exponential-backoff';
 
+import FormSubmissionSnackbar from './FormSubmissionSnackbar';
+import SaveErrorSnackbar from './SaveErrorSnackbar';
 import { onMessage, saveLikedFormSubmission } from './service/mockServer';
 
 export default function ToastStack({onLike, onLikeFail}) {
@@ -20,7 +26,7 @@ export default function ToastStack({onLike, onLikeFail}) {
         if (displayed.current.length < maxSnack) {
           enqueue(formSubmission.id);
         } else {
-          waitList.current.push({key: formSubmission.id, variant: 'default'});
+          waitList.current.push({key: formSubmission.id, variant: 'formSubmission'});
         }
       }
     })
@@ -28,35 +34,17 @@ export default function ToastStack({onLike, onLikeFail}) {
   // eslint-disable-next-line
   }, []);
 
-  function enqueue(key, variant = "default") {
-    let {firstName, lastName, email} = forms.current.get(key).data;
-    let message = `${variant === "error" ? "Failed to like: \n" : ""}${firstName} ${lastName}\n${email}`;
+  function enqueue(key, variant = "formSubmission") {
+    let data = forms.current.get(key).data;
     displayed.current.push({key, variant});
-    enqueueSnackbar(message, {
+    enqueueSnackbar({
       key,
       variant,
+      data,
+      handleLike: () => handleLike(key),
+      handleClose: () => handleClose(key),
       anchorOrigin: { horizontal: "right", vertical: "bottom" },
       persist: true,
-      style: { whiteSpace: "pre-line", width: "400px" },
-      action: (key) => (
-        <>
-          <Button
-            color={variant === "default" ? "primary" : "inherit"}
-            size="small"
-            onClick={() => handleLike(key)}
-          >
-            {variant === 'error' ? 'LIKE AGAIN' : 'LIKE'}
-          </Button>
-          <IconButton
-            size="small"
-            aria-label="close"
-            color="inherit"
-            onClick={() => handleClose(key)}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </>
-      )
     })
   }
 
@@ -88,16 +76,16 @@ export default function ToastStack({onLike, onLikeFail}) {
   function handleLikeFail(key) {
     onLikeFail(key);
     if (displayed.current.length < maxSnack) {
-      enqueue(key, "error");
+      enqueue(key, "saveError");
     } else {
-      let index = displayed.current.findLastIndex(toast => toast.variant === "default");
+      let index = displayed.current.findLastIndex(toast => toast.variant === "formSubmission");
       // If the snackbar is full, try to dequeue one of them and put it in waitList
       if (index >= 0) {
         waitList.current.unshift(displayed.current[index])
-        waitList.current.unshift({key, variant: "error"})
+        waitList.current.unshift({key, variant: "saveError"})
         closeToast(displayed.current[index].key);
       } else {
-        waitList.current.unshift({key, variant: "error"})
+        waitList.current.unshift({key, variant: "saveEerror"})
       }
     }
   }
@@ -118,6 +106,13 @@ export default function ToastStack({onLike, onLikeFail}) {
   }
 
   return (
-    <SnackbarProvider maxSnack={maxSnack} />
+    <SnackbarProvider
+      maxSnack={maxSnack}
+      Components={{
+        formSubmission: FormSubmissionSnackbar,
+        saveError: SaveErrorSnackbar
+      }}
+    />
   )
 }
+
